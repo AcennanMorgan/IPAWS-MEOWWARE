@@ -9,23 +9,23 @@ module Awsip
                   :instance, :environment, :identity
 
     def initialize(params)
-      self.aws_profile      = params[:aws_profile]
-      self.aws_region       = params[:aws_region]
+      @aws_profile      = params[:aws_profile]
+      @aws_region       = params[:aws_region]
 
       Aws.config[:region] = aws_region
 
-      self.project             = params[:project]
-      self.identity            = " -i #{params[:identity]}" if params[:identity]
-      self.environment         = params[:environment]
-      self.proxy               = params[:proxy]
-      self.proxy               = params[:default_proxy_command] if self.proxy == 'proxy' || self.proxy == true
-      self.show_cname          = params[:hostname]
-      self.active              = params[:active]
-      self.inactive            = params[:inactive]
-      self.instance            = params[:instance]
-      self.inactive_matcher    = params[:inactive_matcher]
-      self.active_matcher      = params[:active_matcher]
-      self.project_tag_matcher = params[:project_tag_matcher]
+      @project             = params[:project]
+      @identity            = " -i #{params[:identity]}" if params[:identity]
+      @environment         = params[:environment]
+      @proxy               = params[:proxy]
+      @proxy               = params[:default_proxy_command] if self.proxy == 'proxy' || self.proxy == true
+      @show_cname          = params[:hostname]
+      @active              = params[:active]
+      @inactive            = params[:inactive]
+      @instance            = params[:instance]
+      @inactive_matcher    = params[:inactive_matcher]
+      @active_matcher      = params[:active_matcher]
+      @project_tag_matcher = params[:project_tag_matcher]
 
       if aws_profile
         credentials = Aws::SharedCredentials.new(profile_name: aws_profile)

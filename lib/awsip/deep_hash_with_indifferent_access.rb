@@ -9,7 +9,6 @@ require 'thor/core_ext/hash_with_indifferent_access'
 #
 module Awsip
   class DeepHashWithIndifferentAccess#:nodoc:
-
     #HashWithIndifferentAccess does not convert the hash deeply so we must do this ourselves :(
     def self.convert_hash(hash)
       new_hash = Thor::CoreExt::HashWithIndifferentAccess.new
@@ -26,17 +25,17 @@ module Awsip
     end
 
     def self.convert_array(arr)
-      # new_array = []
-      # arr.each do |value|
-      #   if value.is_a? Hash
-      #     new_array << (convert_hash value)
-      #   elsif value.is_a? Array
-      #     new_array << (convert_array value)
-      #   else
-      #     new_array << value
-      #   end
-      # end
-      # new_array
+      new_array = []
+      arr.each do |value|
+        if value.is_a? Hash
+          new_array << (convert_hash value)
+        elsif value.is_a? Array
+          new_array << (convert_array value)
+        else
+          new_array << value
+        end
+      end
+      new_array
     end
   end
 end
