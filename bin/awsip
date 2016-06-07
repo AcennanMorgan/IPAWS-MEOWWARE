@@ -1,0 +1,160 @@
+#!/usr/bin/env ruby
+require 'thor'
+require 'json'
+require 'yaml'
+require 'awsip/eb_commands'
+require 'awsip/deep_hash_with_indifferent_access'
+require 'awesome_print'
+include Awsip
+
+
+class List < Thor
+  class_option :aws_profile, aliases: '-P', :type => :string, desc: 'AWS profile'
+  class_option :aws_region, aliases: '-r', :type => :string, desc: 'AWS region'
+  desc 'projects', 'List all projects for existing ec2 instances using tags,'+
+      ' slow process'
+  def projects
+    eb = EB_Commands.new(options)
+
+    eb.find_projects.each { |project| puts project}
+  end
+
+  desc 'applications', 'List all applications in EB'
+  def applications
+    eb = EB_Commands.new(options)
+    eb.find_applications.each { |app| puts app}
+  end
+
+  desc 'ips', 'List all instance ips'
+  option :project, aliases: '-p', type: :string, desc: 'Project to find instances for'
+  option :active, aliases: '-a', desc: 'Search for active servers'
+  option :inactive, aliases: '-i', desc: 'Search for inactive servers'
+  option :environment, aliases: '-e', type: :string,
+               desc: 'A description of which environment to use, eg. "dev" or "prod" or "stage-a". '+
+                   'Uses regex as a matcher'
+  option :proxy, aliases: '-x', type: :string, desc: 'Command to proxy to for ssh'
+  option :hostname, aliases: '-h', desc: 'Show full hostname instead of inactive'
+  def ips
+    eb = EB_Commands.new(options)
+    ap eb.list_instances_ips
+  end
+
+  desc 'config_profiles', 'List all the config profiles within the awsip config file'
+  def config_profiles
+    options[:profile_names].each do |name|
+      puts name
+    end
+  end
+end
+
+class Awsips < Thor
+  class_option :project, aliases: '-p', type: :string, desc: 'Project to find instances for'
+  class_option :aws_profile, aliases: '-P', type: :string, desc: 'AWS profile'
+  class_option :aws_region, aliases: '-r', type: :string, desc: 'AWS region'
+  class_option :active, aliases: '-a', desc: 'Search for active servers'
+  class_option :inactive, aliases: '-i', desc: 'Search for inactive servers'
+  class_option :environment, aliases: '-e', type: :string,
+         desc: 'A description of which environment to use, eg. "dev" or "prod". '+
+             'Uses regex as a matcher. When using environment'
+  class_option :proxy, aliases: '-x', type: :string, desc: 'Enable ssh ProxyCommand; No argument defaults to default_proxy_command in configuration; argument overrides proxy config'
+  class_option :hostname, aliases: '-h', desc: 'Show full hostname instead of inactive'
+  class_option :instance, aliases: '-n', type: :numeric, desc: 'Specific instance number to connect to'
+  class_option :identity, aliases: '-y', type: :string, desc: 'ssh identity file'
+  class_option :config, aliases: '-c', type: :string,
+               desc: 'Config to read from (yaml format). All other options will be'+
+                   ' merged with a config file present.'
+  class_option :config_profile, aliases: '-k', type: :string,
+               desc: 'Which profile to use in the config.'
+
+  desc 'list SUBCOMMAND', 'list information'
+  subcommand 'list', List
+
+  desc 'print_ssh', 'print out usable ssh information'
+  def print_ssh
+    eb = EB_Commands.new(options)
+    eb.list_eb_ssh.each do |instance|
+      instance.each { |line| puts line }
+    end
+  end
+
+  desc 'ssh', 'ssh into an existing instance'
+  def ssh
+    eb = EB_Commands.new(options)
+    eb.eb_ssh
+  end
+
+  desc 'version', 'print awsip release version'
+  def version
+    puts "awsip #{Awsip::VERSION}"
+  end
+
+  private
+  def options
+    cli_config = super # command line options
+    env = env_options
+    location = cli_config[:config]
+    all_config_names = {}
+    default_config = '~/.awsip.conf' # Yes it's hardcoded; No it's not changing. If you want to change the default use ENV['AWSIP_CONFIG']
+    if location.nil? || location == 'config'
+      if env[:config_location]
+        location = env[:config_location]
+      else
+        if File.exists?(File.expand_path(default_config)) && ! File.directory?(File.expand_path(default_config))
+          location = default_config
+        end
+      end
+    end
+
+    config = Thor::CoreExt::HashWithIndifferentAccess.new
+    default = Thor::CoreExt::HashWithIndifferentAccess.new
+    if location
+      location = File.expand_path(location)
+      raise 'Config not found!' unless File.exists?(location) && ! File.directory?(location)
+
+      all_configs = DeepHashWithIndifferentAccess.convert_hash(YAML::load(File.open(location)))
+
+      all_config_names[:profile_names] = all_configs.keys
+      raise 'Config cannot be empty!' if all_configs.nil?
+      all_configs.each do |name,profile|
+        default = profile if name == 'default'
+      end
+
+      config_profile = cli_config[:config_profile] || env_options[:config_profile] || default[:config_profile]
+
+
+      if config_profile
+        config_profiles = config_profile.gsub(',','.').split('.').reverse
+        puts "Current config profile loaded: #{config_profile}\n" unless $profile_printed
+        $profile_printed = true
+        config_profiles.each do |config_name|
+          raise "Config profile '#{config_name}' does not exist!" if all_configs[config_name].nil?
+          config = config.merge(all_configs[config_name])
+        end
+      end
+    end
+
+    # precedence from inner to outer
+    application_default_options.merge(default.merge(env_options.merge(config.merge(cli_config.merge(all_config_names)))))
+  end
+
+  def application_default_options
+    defaults = Thor::CoreExt::HashWithIndifferentAccess.new
+    defaults[:aws_region] = 'us-west-2' # awsebcli tool defaults to this value
+    defaults[:inactive_matcher] = 'inactive' # string that identifies inactive hosts; only inactive or active has to be defined, the opposite will be inferred via !#{matcher}
+    defaults[:project_tag_matcher] = 'Project'
+    # defaults[:active_matcher] = 'active'
+    defaults
+  end
+
+  def env_options
+    env = Thor::CoreExt::HashWithIndifferentAccess.new
+    env[:aws_region] = ENV['AWS_DEFAULT_REGION'] if ENV['AWS_DEFAULT_REGION']
+    env[:aws_profile] = ENV['AWS_DEFAULT_PROFILE'] if ENV['AWS_DEFAULT_PROFILE']
+    env[:project] = ENV['AWSIP_PROJECT'] if ENV['AWSIP_PROJECT']
+    env[:config_profile] = ENV['AWSIP_CONFIG_PROFILE'] if ENV['AWSIP_CONFIG_PROFILE']
+    env[:config_location] = ENV['AWSIP_CONFIG'] if ENV['AWSIP_CONFIG']
+    env
+  end
+
+end
+Awsips.start(ARGV)

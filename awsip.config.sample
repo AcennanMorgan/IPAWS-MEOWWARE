@@ -1,0 +1,51 @@
+# This is a sample config file, you can copy it to your home directly and rename it to .awsip.conf to get started.
+# Any of the profiles can have as many or as little options as you need. Different profiles can be chained and combined
+# using ',' or '.' delimiters when config option eg. -k dexter_lab.prod.active.
+
+# default is always evaluated, any option passed via ENVIRONMENT variable, explicit config profile, or command line takes
+# precedence over config options in the default profile section
+default:
+  aws_region: 'us-west-2'
+  #aws_profile: "default" # IAM Credential file profile to use - https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs
+
+  # default config profile(s) to use; config profile can be chained using a
+  # ',' or '.' delimiter. The config options from each profile is merged
+  # together. On config option conflict, the first profile listed within the
+  # chain with the config option wins
+  config_profile: "im_a_teapot"
+
+  identity: "~/.ssh/aws_rsa.pub" # SSH Identity file
+  default_proxy_command: "proxy_user@downtherabbithole.alice.wonderland" # value passed to ssh ProxyCommand when --proxy is enabled
+
+  # string within CNAME that identifies inactive/active blue-green environments;
+  # only inactive or active has to be defined, the opposite will be inferred via !#{matcher}
+  #inactive_matcher: 'inactive'
+  #active_matcher: 'custom'
+
+  # AWS Tag used to identify the different projects
+  #project_tag_matcher: "Project" # default is Project
+active:
+  active: true
+inactive:
+  inactive: true
+prod:
+  aws_profile: "production"
+  proxy: true # In our example, production environments are always behind a proxy ssh host
+  environment: "prod" # Regex matches the elastic beanstalk environment name
+stage:
+  aws_profile: "default"
+  environment: "stage" # Regex matches the elastic beanstalk environment name
+  # stage doesn't use a proxy!
+dev:
+  aws_profile: "dev"
+  environment: "dev" # Regex matches the elastic beanstalk environment name
+  # dev doesn't use a proxy!
+
+im_a_teapot:
+  project: "ImATeaPot"
+  aws_profile: "production" #AWS profile you want to use that was configured using `aws configure`
+  aws_region: "us-west-1"
+dexter_lab:
+  project: "DexterLab"
+  aws_region: "us-east-1"
+  default_proxy_command: "other_proxy_user@behind.the.bookshelf.dexter.lab"
