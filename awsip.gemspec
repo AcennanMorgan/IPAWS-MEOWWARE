@@ -1,13 +1,13 @@
 # coding: utf-8
 lib = File.expand_path('../lib/', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'awsip/version'
+require 'ipaws/version'
 
 Gem::Specification.new do |gem|
   gem.required_ruby_version = '>=2.2.0'
 
-  gem.name          = 'awsip'
-  gem.version       = Awsip::VERSION
+  gem.name          = 'ipaws'
+  gem.version       = Ipaws::VERSION
   gem.authors       = ['BaneOfSerenity', 'Brad Cantin', 'Jonathan Chan']
   gem.email         = ['thowe.dev@gmail.com', 'brad.cantin@gmail.com', 'jc@jmccc.com']
 
@@ -18,7 +18,7 @@ Gem::Specification.new do |gem|
                          using different ssh proxy configurations.
                         }
   gem.summary       = %q{AWS EC2 IP Address CLI Management Tool}
-  gem.homepage      = 'https://www.github.com/Malwarebytes/awsips'
+  gem.homepage      = 'https://www.github.com/Malwarebytes/ipaws'
   gem.license       = 'MIT'
 
   gem.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }

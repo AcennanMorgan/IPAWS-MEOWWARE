@@ -1,5 +1,5 @@
 
-# AWSIPS
+# IPAWS
 
 Do you use AWS ?
 
@@ -7,12 +7,12 @@ Do you need to SSH into those instances ?
 
 Do you hate having to use a web browser to find the instances and ip addresses ?
 
-Then you should use awsip!
+Then you should use ipaws! IP AWS... ipAWS... whatever way you want to read/say it as. :)
 
-awsip is a devops tool for listing and ssh-ing into ec2 instances. awsip is especially helpful in environments that utilize
+ipaws is a devops tool for listing and ssh-ing into ec2 instances. ipaws is especially helpful in environments that utilize
 dynamically created ec2 instances from Elastic Beanstalk.
 
-awsip features filtering by:
+ipaws features filtering by:
 
  * AWS Credential Profile
  * AWS Region
@@ -20,25 +20,25 @@ awsip features filtering by:
  * environment with regex matching (prod, stage, dev, etc.)
  * blue-green active/inactive
 
-awsip also integrates closely with a wide variety of ssh options (ProxyCommand, custom identity files, etc.) allowing 
+ipaws also integrates closely with a wide variety of ssh options (ProxyCommand, custom identity files, etc.) allowing 
 you to ssh with a single command into even the most secure environments! The pain of logging into a server without a 
-public IP or one that is behind a jump box will be a thing of the past with awsip!
+public IP or one that is behind a jump box will be a thing of the past with ipaws!
 
 ## Pre-requisites 
 
-awsip makes a few assumptions about your environment. Certain features may or may not work if your AWS environment
+ipaws makes a few assumptions about your environment. Certain features may or may not work if your AWS environment
  is not properly configured.
 
-1. **Project Tag Name** - Every application needs to be tagged to a project; this tag helps awsip to group different 
+1. **Project Tag Name** - Every application needs to be tagged to a project; this tag helps ipaws to group different 
     environments as part of the same project; default tag name used is "Project" but the tag name can be changed via the 
     ```project_tag_matcher``` config option. For example, other companies may tag their applications by the 
-    "Application" tag, ```project_tag_matcher: "Application"``` would make awsip work with that. 
+    "Application" tag, ```project_tag_matcher: "Application"``` would make ipaws work with that. 
     [Tagging Reference](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.tagging.html)
     
 2. **Environment Name** - For blue/green environments, the blue and green environment must include a string that matches
-    both environments. Eg. ```myapp-prod-a, myapp-prod-b``` awsip will be able to match on ```myapp-prod```.
+    both environments. Eg. ```myapp-prod-a, myapp-prod-b``` ipaws will be able to match on ```myapp-prod```.
      
-3. **inactive/active CNAME** - awsip uses cname matching to determine which environment is live and which environment is 
+3. **inactive/active CNAME** - ipaws uses cname matching to determine which environment is live and which environment is 
     inactive. A string must be in either the active or inactive cname to indicate its state. You can use the 
     ```inactive_matcher``` or the ```active_matcher``` config option signify this. Only one option has to be defined, 
      the opposite will be inferred.
@@ -50,7 +50,7 @@ TODO: We'll have this up on rubygems.com soon!
 
 ```
 gem install specific_install
-gem specific_install https://github.com/Malwarebytes/awsips.git master
+gem specific_install https://github.com/Malwarebytes/ipaws.git master
 ```
 
 * rake install (while in the projects root directory)
@@ -58,18 +58,18 @@ gem specific_install https://github.com/Malwarebytes/awsips.git master
 
 ## Config file
 
-Please refer to [awsip.config.sample](awsip.config.sample) for an example config file and a starting point. A config 
-file is almost a requirement if you want to use awsip conveniently.
+Please refer to [ipaws.config.sample](ipaws.config.sample) for an example config file and a starting point. A config 
+file is almost a requirement if you want to use ipaws conveniently.
 
 ## Usage
 
-    awsip help
+    ipaws help
     Commands:
-      awsip help [COMMAND]   # Describe available commands or one specific command
-      awsip list SUBCOMMAND  # list information
-      awsip print_ssh        # print out usable ssh information
-      awsip ssh              # ssh into an existing instance
-      awsip version          # print awsip release version
+      ipaws help [COMMAND]   # Describe available commands or one specific command
+      ipaws list SUBCOMMAND  # list information
+      ipaws print_ssh        # print out usable ssh information
+      ipaws ssh              # ssh into an existing instance
+      ipaws version          # print ipaws release version
 
     
     Options:
@@ -86,13 +86,13 @@ file is almost a requirement if you want to use awsip conveniently.
       -c, [--config=CONFIG]                  # Config to read from (yaml format). All other options will be merged with a config file present.
       -k, [--config-profile=CONFIG_PROFILE]  # Which profile to use in the config.
     
-    awsip list help
+    ipaws list help
     Commands:
-      awsip list applications     # List all applications in EB
-      awsip list config_profiles  # List all the config profiles within the awsip config file
-      awsip list help [COMMAND]   # Describe subcommands or one specific subcommand
-      awsip list ips              # List all instance ips for said application
-      awsip list projects         # List all projects for existing ec2 instances using tags, slow process
+      ipaws list applications     # List all applications in EB
+      ipaws list config_profiles  # List all the config profiles within the ipaws config file
+      ipaws list help [COMMAND]   # Describe subcommands or one specific subcommand
+      ipaws list ips              # List all instance ips for said application
+      ipaws list projects         # List all projects for existing ec2 instances using tags, slow process
     
     Options:
       -P, [--aws-profile=AWS_PROFILE]  # AWS profile
@@ -103,14 +103,14 @@ Supported Environment Variables (and which option they correlate to)
 ```
         AWS_DEFAULT_REGION =>   -r, [--aws-region=REGION]
         AWS_DEFAULT_PROFILE =>  -P, [--aws-profile=PROFILE]
-        AWSIP_PROJECT =>        -p, [--project=PROJECT]
-        AWSIP_CONFIG_PROFILE => -k, [--config-profile=CONFIG_PROFILE]  
-        AWSIP_CONFIG =>         -c, [--config=CONFIG]
+        IPAWS_PROJECT =>        -p, [--project=PROJECT]
+        IPAWS_CONFIG_PROFILE => -k, [--config-profile=CONFIG_PROFILE]  
+        IPAWS_CONFIG =>         -c, [--config=CONFIG]
 ```
 
 ### Config Option Precedence
 
-Most options have multiple locations to define the same config option. awsip merges all options and resolves
+Most options have multiple locations to define the same config option. ipaws merges all options and resolves
 conflicts by the following precedence rules:
 
 1. command line option
@@ -132,7 +132,7 @@ precedence over the other config options.
 For example, using the example config file:
 
 ```
-awsip -k im_a_teapot,dexter_lab
+ipaws -k im_a_teapot,dexter_lab
 ```
 
 The project will be set to "ImATeaPot".
@@ -147,7 +147,7 @@ The project will be set to "ImATeaPot".
 * ssh command
 
 ```
-    awsip print_ssh
+    ipaws print_ssh
     
     1)
     	im-a-teapot-dev-a - inactive
@@ -175,7 +175,7 @@ The project will be set to "ImATeaPot".
 
 
 ```
-    awsip ssh -k im_a_teapot.inactive.dev
+    ipaws ssh -k im_a_teapot.inactive.dev
     For environment: 	im-a-teapot-dev-a - inactive
     Running: 	ssh ec2-user@1.1.1.1
     Authenticated to 1.1.1.1 ([1.1.1.1]:22).

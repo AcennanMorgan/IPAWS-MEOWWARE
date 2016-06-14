@@ -2,7 +2,7 @@ require 'set'
 require 'json'
 require 'aws-sdk'
 
-module Awsip
+module Ipaws
   class EB_Commands
     attr_accessor :aws_profile, :aws_region, :project, :proxy,
                   :show_cname, :active, :inactive, :active_matcher, :inactive_matcher, :project_tag_matcher,
@@ -39,6 +39,7 @@ module Awsip
     def find_projects
       tags = Aws::EC2::Client.new.describe_tags[:tags]
 
+      # puts tags.map { |t| t.to_h }.to_json # debugging
       projects = SortedSet.new
       tags.each do |tag|
         if tag[:key] == project_tag_matcher
@@ -51,6 +52,7 @@ module Awsip
 
     def find_applications
       describe_eb = Aws::ElasticBeanstalk::Client.new.describe_applications
+      # puts describe_eb.to_h.to_json # debugging
       SortedSet.new(describe_eb[:applications].map {|record| record[:application_name]})
     end
 
@@ -58,11 +60,18 @@ module Awsip
       options = {}
       options[:filters] = [{ name: "tag:#{project_tag_matcher}", values: [project] }] if project
 
-      Aws::EC2::Client.new.describe_instances(options)[:reservations]
+      output = Aws::EC2::Client.new.describe_instances(options)[:reservations]
+      # puts "find_project_instances_describe_instances" # debugging
+      # puts output.map{|t|t.to_h}.to_json # debugging
+
+      output
     end
 
     def describe_eb
-      Aws::ElasticBeanstalk::Client.new.describe_environments[:environments]
+      e = Aws::ElasticBeanstalk::Client.new.describe_environments[:environments]
+      #puts "describe_eb_describe_environments" # debugging
+      #puts e.map{|t| t.to_h}.to_json # debugging
+      e
     end
 
     def list_instances_ips

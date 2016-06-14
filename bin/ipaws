@@ -2,10 +2,10 @@
 require 'thor'
 require 'json'
 require 'yaml'
-require 'awsip/eb_commands'
-require 'awsip/deep_hash_with_indifferent_access'
+require 'ipaws/eb_commands'
+require 'ipaws/deep_hash_with_indifferent_access'
 require 'awesome_print'
-include Awsip
+include Ipaws
 
 
 class List < Thor
@@ -39,7 +39,7 @@ class List < Thor
     ap eb.list_instances_ips
   end
 
-  desc 'config_profiles', 'List all the config profiles within the awsip config file'
+  desc 'config_profiles', 'List all the config profiles within the ipaws config file'
   def config_profiles
     options[:profile_names].each do |name|
       puts name
@@ -47,7 +47,7 @@ class List < Thor
   end
 end
 
-class Awsips < Thor
+class IpawsCLI < Thor
   class_option :project, aliases: '-p', type: :string, desc: 'Project to find instances for'
   class_option :aws_profile, aliases: '-P', type: :string, desc: 'AWS profile'
   class_option :aws_region, aliases: '-r', type: :string, desc: 'AWS region'
@@ -83,9 +83,9 @@ class Awsips < Thor
     eb.eb_ssh
   end
 
-  desc 'version', 'print awsip release version'
+  desc 'version', 'print ipaws release version'
   def version
-    puts "awsip #{Awsip::VERSION}"
+    puts "ipaws #{Ipaws::VERSION}"
   end
 
   private
@@ -94,7 +94,7 @@ class Awsips < Thor
     env = env_options
     location = cli_config[:config]
     all_config_names = {}
-    default_config = '~/.awsip.conf' # Yes it's hardcoded; No it's not changing. If you want to change the default use ENV['AWSIP_CONFIG']
+    default_config = '~/.ipaws.conf' # Yes it's hardcoded; No it's not changing. If you want to change the default use ENV['IPAWS_CONFIG']
     if location.nil? || location == 'config'
       if env[:config_location]
         location = env[:config_location]
@@ -150,11 +150,11 @@ class Awsips < Thor
     env = Thor::CoreExt::HashWithIndifferentAccess.new
     env[:aws_region] = ENV['AWS_DEFAULT_REGION'] if ENV['AWS_DEFAULT_REGION']
     env[:aws_profile] = ENV['AWS_DEFAULT_PROFILE'] if ENV['AWS_DEFAULT_PROFILE']
-    env[:project] = ENV['AWSIP_PROJECT'] if ENV['AWSIP_PROJECT']
-    env[:config_profile] = ENV['AWSIP_CONFIG_PROFILE'] if ENV['AWSIP_CONFIG_PROFILE']
-    env[:config_location] = ENV['AWSIP_CONFIG'] if ENV['AWSIP_CONFIG']
+    env[:project] = ENV['IPAWS_PROJECT'] if ENV['IPAWS_PROJECT']
+    env[:config_profile] = ENV['IPAWS_CONFIG_PROFILE'] if ENV['IPAWS_CONFIG_PROFILE']
+    env[:config_location] = ENV['IPAWS_CONFIG'] if ENV['IPAWS_CONFIG']
     env
   end
 
 end
-Awsips.start(ARGV)
+IpawsCLI.start(ARGV)

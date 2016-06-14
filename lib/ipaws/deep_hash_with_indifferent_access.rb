@@ -7,7 +7,7 @@ require 'thor/core_ext/hash_with_indifferent_access'
 #   hash['foo'] #=> 'bar'
 #   hash.foo?   #=> true
 #
-module Awsip
+module Ipaws
   class DeepHashWithIndifferentAccess#:nodoc:
     #HashWithIndifferentAccess does not convert the hash deeply so we must do this ourselves :(
     def self.convert_hash(hash)
