@@ -11,6 +11,7 @@ module Ipaws
   class DeepHashWithIndifferentAccess#:nodoc:
     #HashWithIndifferentAccess does not convert the hash deeply so we must do this ourselves :(
     def self.convert_hash(hash)
+      # NOTE (cmhobbs) this can be cleaned up with Object#tap
       new_hash = Thor::CoreExt::HashWithIndifferentAccess.new
       hash.each do |key, value|
         if value.is_a? Hash
@@ -25,6 +26,7 @@ module Ipaws
     end
 
     def self.convert_array(arr)
+      # NOTE (cmhobbs) this can be cleaned up with Object#tap
       new_array = []
       arr.each do |value|
         if value.is_a? Hash

@@ -32,57 +32,45 @@ module Ipaws
       else
         credentials = Aws::SharedCredentials.new
       end
+
       raise 'Cannot load credentials' unless credentials.loadable?
       Aws.config[:credentials] = credentials
     end
 
     def find_projects
-      tags = Aws::EC2::Client.new.describe_tags[:tags]
-
-      # puts tags.map { |t| t.to_h }.to_json # debugging
-      projects = SortedSet.new
-      tags.each do |tag|
-        if tag[:key] == project_tag_matcher
-          projects << tag[:value]
+      SortedSet.new.tap do |projects|
+        describe_ec2_tags.each do |tag|
+          if tag[:key] == project_tag_matcher
+            projects << tag[:value]
+          end
         end
       end
-
-      projects
     end
 
     def find_applications
-      describe_eb = Aws::ElasticBeanstalk::Client.new.describe_applications
-      # puts describe_eb.to_h.to_json # debugging
-      SortedSet.new(describe_eb[:applications].map {|record| record[:application_name]})
+      SortedSet.new(ebs_application_names)
     end
 
     def find_project_instances
-      options = {}
-      options[:filters] = [{ name: "tag:#{project_tag_matcher}", values: [project] }] if project
-
-      output = Aws::EC2::Client.new.describe_instances(options)[:reservations]
-      # puts "find_project_instances_describe_instances" # debugging
-      # puts output.map{|t|t.to_h}.to_json # debugging
-
-      output
-    end
-
-    def describe_eb
-      e = Aws::ElasticBeanstalk::Client.new.describe_environments[:environments]
-      #puts "describe_eb_describe_environments" # debugging
-      #puts e.map{|t| t.to_h}.to_json # debugging
-      e
+      options = Hash.new.tap do |hash|
+        if project
+          hash[:filters] = [{ name: "tag:#{project_tag_matcher}", values: [project] }]
+        end
+      end
+      
+      Aws::EC2::Client.new.describe_instances(options)[:reservations]
     end
 
     def list_instances_ips
-      data = find_project_instances
-      eb_data = describe_eb
+      data    = find_project_instances
+      eb_data = ebs_environments
 
       cname_hash = {}
       eb_data.each do |environment|
         cname_hash[environment[:environment_name]] = environment[:cname]
       end
 
+      # FIXME (cmhobbs) extract all this nested logic into useful methods and exceptions
       ip_hash = {}
       data.each do |reservation|
         reservation[:instances].each do |instance|
@@ -130,6 +118,8 @@ module Ipaws
 
       number=0
       output = []
+
+      # FIXME (cmhobbs) clean this up
       ip_hash.sort {|a,b| a[1]<=>b[1]}.each do |k,v|
         if k
           number+=1
@@ -164,5 +154,28 @@ module Ipaws
       sleep 1
       exec(output[-1])
     end
+
+    private
+
+    def describe_ec2_tags
+      Aws::EC2::Client.new.describe_tags[:tags]
+    end
+
+    def ebs_application_names
+      describe_ebs_applications.map { |record| record[:application_name] }
+    end
+    
+    def describe_ebs_applications
+      Aws::ElasticBeanstalk::Client.new.describe_applications[:applications]
+    end
+
+    def describe_ec2_instances(options)
+      Aws::EC2::Client.new.describe_instances(options)
+    end
+    
+    def ebs_environments
+      Aws::ElasticBeanstalk::Client.new.describe_environments[:environments]
+    end
+    
   end
 end
